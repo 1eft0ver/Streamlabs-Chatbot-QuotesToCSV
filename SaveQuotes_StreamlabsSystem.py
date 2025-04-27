@@ -22,7 +22,7 @@ ScriptName = "Save Quotes"
 Website = "https://twitch.tv/1eft0ver"
 Description = "Saves quotes to a CSV file"
 Creator = "1eft0ver"
-Version = "1.0.0"
+Version = "1.0.1"
 
 #---------------------------
 #   Define Global Variables
@@ -38,8 +38,10 @@ class SaveQuotesSettings:
             with codecs.open(settings_file, encoding="utf-8-sig", mode="r") as f:
                 self.__dict__ = json.load(f, encoding="utf-8")
         except:
+            Parent.Log(ScriptName, "Failed to open settings file {}".format(str(e)))
             self.CsvPath = defaultCsvPath
             self.CommandName = "!名言"
+            self.CustomMessage = "「{quote}」 by 知名實況主 1eft0ver"  # Default message
 
     def Reload(self, json_data):
         self.__dict__ = json.loads(json_data, encoding="utf-8")
@@ -69,6 +71,7 @@ def Init():
     settings = SaveQuotesSettings(settingsFile)
     settings.CsvPath = ensure_absolute_path(settings.CsvPath)
     settings.CommandName = settings.CommandName if hasattr(settings, 'CommandName') else "!名言"
+    settings.CustomMessage = settings.CustomMessage if hasattr(settings, 'CustomMessage') else "「{quote}」 by 1eft0ver"
     settings.Save(settingsFile)
     updateUi()
 
@@ -81,6 +84,17 @@ def Init():
             writer.writerow(["Timestamp", "Username", "Quote"])
     else:
         logging.debug("CSV file already exists at {}.".format(csv_path))
+
+def sanitize_csv_file(file_path):
+    """Remove BOM from the CSV file if present."""
+    with open(file_path, 'r', encoding='utf-8-sig') as f:
+        lines = f.readlines()
+
+    with open(file_path, 'w', encoding='utf-8') as f:
+        f.writelines(lines)
+
+# Call this function during initialization to sanitize the CSV file
+sanitize_csv_file(settings.CsvPath)
 
 #---------------------------
 #   [Required] Execute Data / Process messages
@@ -108,7 +122,9 @@ def Execute(data):
                 writer = csv.writer(csvfile, lineterminator="\n")
                 writer.writerow([timestamp, sanitize_data(username), quote])
 
-            Parent.SendStreamMessage("「{}」 by 知名實況主 1eft0ver".format(quote))
+            # Use the custom message
+            custom_message = settings.CustomMessage.format(quote=quote)
+            Parent.SendStreamMessage(custom_message)
 
 #---------------------------
 #   [Required] Tick method (Gets called during every iteration even when there is no incoming data)
@@ -123,25 +139,26 @@ def Tick():
 
 def SaveSettings():
     global settings
-    # Update settings with the current UI value
     uiConfigPath = os.path.join(os.path.dirname(__file__), "UI_Config.json")
     try:
         with codecs.open(uiConfigPath, encoding="utf-8-sig", mode="r") as f:
             uiConfig = json.load(f)
-        # Update CsvPath in settings from UI
+        # Update settings from UI_Config.json
         settings.CsvPath = uiConfig["CsvPath"].get("value", defaultCsvPath)
         settings.CommandName = uiConfig["CommandName"].get("value", settings.CommandName)
+        settings.CustomMessage = uiConfig["CustomMessage"].get("value", settings.CustomMessage)
     except Exception as e:
         Parent.Log(ScriptName, "Failed to read UI_Config.json: {}".format(str(e)))
 
-    # Save to save_quotes_settings.json
+    # Save updated settings to save_quotes_settings.json
     settings.Save(settingsFile)
 
-    # Update UI_Config.json with the latest settings
     try:
+        # Update UI_Config.json with the latest settings values
+        uiConfig["CsvPath"]["value"] = settings.CsvPath
+        uiConfig["CommandName"]["value"] = settings.CommandName
+        uiConfig["CustomMessage"]["value"] = settings.CustomMessage
         with codecs.open(uiConfigPath, encoding="utf-8-sig", mode="w+") as f:
-            uiConfig["CsvPath"]["value"] = settings.CsvPath
-            uiConfig["CommandName"]["value"] = settings.CommandName
             json.dump(uiConfig, f, indent=4)
     except Exception as e:
         Parent.Log(ScriptName, "Failed to update UI_Config.json: {}".format(str(e)))
@@ -168,6 +185,7 @@ def updateUi():
             uiConfig = json.load(f)
         uiConfig["CsvPath"]["value"] = ensure_absolute_path(settings.CsvPath)
         uiConfig["CommandName"]["value"] = settings.CommandName
+        uiConfig["CustomMessage"]["value"] = settings.CustomMessage
         with codecs.open(uiConfigPath, encoding="utf-8-sig", mode="w+") as f:
             json.dump(uiConfig, f, indent=4)
     except Exception as e:

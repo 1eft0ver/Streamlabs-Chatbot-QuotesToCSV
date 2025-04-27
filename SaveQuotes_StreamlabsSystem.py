@@ -31,7 +31,6 @@ settingsFile = os.path.join(os.path.dirname(__file__), "Settings", "save_quotes_
 defaultCsvPath = os.path.join(os.path.dirname(__file__), "quotes.csv")
 settings = {}
 
-# Add settings handling similar to SyrslyRegBot
 class SaveQuotesSettings:
     def __init__(self, settings_file=None):
         try:
@@ -64,7 +63,7 @@ def ensure_absolute_path(path):
         return os.path.abspath(path)
     return path
 
-# Update Init to ensure CSV file includes headers and uses utf-8-sig encoding
+# Update Init function to use utf-8 encoding instead of utf-8-sig
 def Init():
     logging.debug("Init function called.")
     global settings
@@ -75,11 +74,16 @@ def Init():
     settings.Save(settingsFile)
     updateUi()
 
-    # Ensure the CSV file exists
+    # Ensure the directory for the CSV file exists before creating the file
     csv_path = settings.CsvPath
+    csv_dir = os.path.dirname(csv_path)
+    if not os.path.exists(csv_dir):
+        logging.debug("Directory not found at {}. Creating directory.".format(csv_dir))
+        os.makedirs(csv_dir)
+
     if not os.path.exists(csv_path):
         logging.debug("CSV file not found at {}. Creating file with headers.".format(csv_path))
-        with codecs.open(csv_path, mode="w", encoding="utf-8-sig") as csvfile:
+        with codecs.open(csv_path, mode="w", encoding="utf-8") as csvfile:
             writer = csv.writer(csvfile, lineterminator="\n")
             writer.writerow(["Timestamp", "Username", "Quote"])
     else:
@@ -119,7 +123,7 @@ def Execute(data):
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             current_date = datetime.now().strftime("%Y/%m/%d") # Format date as YYYY/MM/DD
             csv_path = settings.CsvPath
-            with codecs.open(csv_path, mode="a", encoding="utf-8-sig") as csvfile:
+            with codecs.open(csv_path, mode="a", encoding="utf-8") as csvfile:
                 writer = csv.writer(csvfile, lineterminator="\n")
                 writer.writerow([timestamp, sanitize_data(username), quote])
 

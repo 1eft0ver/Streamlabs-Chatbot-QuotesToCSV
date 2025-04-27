@@ -10,7 +10,7 @@
         "group": "Core", 
         "tooltip": "Specify the custom message to display after saving a quote.", 
         "label": "Custom Message", 
-        "value": "\u300c{quote}\u300d by 1eft0ver", 
+        "value": "\u300c{quote}\u300d by 1eft0ver on {date}", 
         "type": "textbox"
     }, 
     "output_file": "Settings/save_quotes_settings.json", 

@@ -41,7 +41,7 @@ class SaveQuotesSettings:
             Parent.Log(ScriptName, "Failed to open settings file {}".format(str(e)))
             self.CsvPath = defaultCsvPath
             self.CommandName = "!名言"
-            self.CustomMessage = "「{quote}」 by 知名實況主 1eft0ver"  # Default message
+            self.CustomMessage = "「{quote}」 by 知名實況主 1eft0ver on {date}"
 
     def Reload(self, json_data):
         self.__dict__ = json.loads(json_data, encoding="utf-8")
@@ -87,10 +87,10 @@ def Init():
 
 def sanitize_csv_file(file_path):
     """Remove BOM from the CSV file if present."""
-    with open(file_path, 'r', encoding='utf-8-sig') as f:
+    with codecs.open(file_path, 'r', encoding='utf-8-sig') as f:
         lines = f.readlines()
 
-    with open(file_path, 'w', encoding='utf-8') as f:
+    with codecs.open(file_path, 'w', encoding='utf-8') as f:
         f.writelines(lines)
 
 # Call this function during initialization to sanitize the CSV file
@@ -117,13 +117,13 @@ def Execute(data):
         quote = sanitize_data(message[len(command_name):].strip())
         if quote:
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            current_date = datetime.now().strftime("%Y/%m/%d") # Format date as YYYY/MM/DD
             csv_path = settings.CsvPath
             with codecs.open(csv_path, mode="a", encoding="utf-8-sig") as csvfile:
                 writer = csv.writer(csvfile, lineterminator="\n")
                 writer.writerow([timestamp, sanitize_data(username), quote])
 
-            # Use the custom message
-            custom_message = settings.CustomMessage.format(quote=quote)
+            custom_message = settings.CustomMessage.format(quote=quote, date=current_date)
             Parent.SendStreamMessage(custom_message)
 
 #---------------------------

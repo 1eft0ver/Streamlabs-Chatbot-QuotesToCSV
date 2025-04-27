@@ -1,0 +1,17 @@
+﻿{
+    "CsvPath": {
+        "group": "Core", 
+        "tooltip": "Specify the path to the CSV file where quotes will be saved.", 
+        "label": "Path to CSV File", 
+        "value": "C:\\quotes.csv", 
+        "type": "textbox"
+    }, 
+    "output_file": "Settings/save_quotes_settings.json", 
+    "CommandName": {
+        "group": "Core", 
+        "tooltip": "Specify the command name to trigger saving quotes.", 
+        "label": "Command Name", 
+        "value": "!\u540d\u8a00", 
+        "type": "textbox"
+    }
+}

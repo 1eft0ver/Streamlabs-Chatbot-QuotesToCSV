@@ -90,6 +90,10 @@ def Init():
         logging.debug("CSV file already exists at {}.".format(csv_path))
 
 def sanitize_csv_file(file_path):
+    if not os.path.exists(file_path):
+        logging.error("CSV file not found at {}. Skip sanitizing csv file.".format(file_path))
+        return
+    
     """Remove BOM from the CSV file if present."""
     with codecs.open(file_path, 'r', encoding='utf-8-sig') as f:
         lines = f.readlines()
